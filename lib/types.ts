@@ -1,15 +1,22 @@
 export interface Category {
   id: string
   name: string
-  image?: string
+  slug: string
+  description?: string
+  created_at?: string
 }
 
 export interface Product {
   id: string
   name: string
-  description: string
-  price: number
-  image?: string
+  slug: string
+  description?: string
+  price_cents: number
+  stock: number
+  images?: string[]
+  active: boolean
   categoryId: string
   categoryName: string
+  created_at?: string
+  updated_at?: string
 }

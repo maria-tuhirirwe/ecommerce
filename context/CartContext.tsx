@@ -1,73 +1,150 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import { useAuth } from "@/context/AuthContext"
+import { addToCart as addToCartDB, removeFromCart as removeFromCartDB, getCartItems } from "@/app/api/apis"
 import type { Product } from "@/lib/types"
 
 type CartItem = {
+  id?: number
   product: Product
   quantity: number
+  price_cents_at_add?: number
 }
 
 type CartContextType = {
   cart: CartItem[]
-  addToCart: (product: Product, quantity: number) => void
-  updateQuantity: (productId: string, quantity: number) => void
-  removeFromCart: (productId: string) => void
-  clearCart: () => void
+  addToCart: (product: Product, quantity: number) => Promise<void>
+  updateQuantity: (productId: string, quantity: number) => Promise<void>
+  removeFromCart: (productId: string) => Promise<void>
+  clearCart: () => Promise<void>
+  loading: boolean
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([])
+  const [loading, setLoading] = useState(false)
+  const { user } = useAuth()
 
-  // Load cart from localStorage on initial render
+  // Load cart from database when user is authenticated
   useEffect(() => {
-    const savedCart = localStorage.getItem("cart")
-    if (savedCart) {
-      try {
-        setCart(JSON.parse(savedCart))
-      } catch (error) {
-        console.error("Failed to parse cart from localStorage:", error)
-      }
+    if (user?.id) {
+      loadCartFromDB()
+    } else {
+      setCart([])
     }
-  }, [])
+  }, [user?.id])
 
-  // Save cart to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(cart))
-  }, [cart])
+  const loadCartFromDB = async () => {
+    if (!user?.id) return
+    
+    try {
+      setLoading(true)
+      const cartItems = await getCartItems(user.id)
+      const formattedCart: CartItem[] = cartItems.map(item => ({
+        id: item.id,
+        product: {
+          id: item.product_id.toString(),
+          name: item.products?.name || 'Unknown Product',
+          slug: '',
+          price_cents: item.products?.price_cents || item.price_cents_at_add,
+          stock: 0,
+          images: item.products?.images,
+          active: true,
+          categoryId: '',
+          categoryName: ''
+        },
+        quantity: item.qty,
+        price_cents_at_add: item.price_cents_at_add
+      }))
+      setCart(formattedCart)
+    } catch (error) {
+      console.error('Failed to load cart from database:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
-  const addToCart = (product: Product, quantity: number) => {
-    setCart((prevCart) => {
-      const existingItemIndex = prevCart.findIndex((item) => item.product.id === product.id)
+  const addToCart = async (product: Product, quantity: number) => {
+    if (!user?.id) {
+      console.error('User not authenticated')
+      return
+    }
 
-      if (existingItemIndex !== -1) {
-        // If product already exists in cart, update quantity
-        const updatedCart = [...prevCart]
-        updatedCart[existingItemIndex].quantity += quantity
-        return updatedCart
-      } else {
-        // Otherwise add new item
-        return [...prevCart, { product, quantity }]
+    try {
+      setLoading(true)
+      await addToCartDB(user.id, parseInt(product.id), quantity, product.price_cents)
+      await loadCartFromDB() // Reload cart from database
+    } catch (error) {
+      console.error('Failed to add item to cart:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const updateQuantity = async (productId: string, quantity: number) => {
+    if (!user?.id) {
+      console.error('User not authenticated')
+      return
+    }
+
+    try {
+      setLoading(true)
+      // First remove the existing item, then add with new quantity
+      await removeFromCartDB(user.id, parseInt(productId))
+      const product = cart.find(item => item.product.id === productId)?.product
+      if (product && quantity > 0) {
+        await addToCartDB(user.id, parseInt(productId), quantity, product.price_cents)
       }
-    })
+      await loadCartFromDB() // Reload cart from database
+    } catch (error) {
+      console.error('Failed to update cart quantity:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const updateQuantity = (productId: string, quantity: number) => {
-    setCart((prevCart) => prevCart.map((item) => (item.product.id === productId ? { ...item, quantity } : item)))
+  const removeFromCart = async (productId: string) => {
+    if (!user?.id) {
+      console.error('User not authenticated')
+      return
+    }
+
+    try {
+      setLoading(true)
+      await removeFromCartDB(user.id, parseInt(productId))
+      await loadCartFromDB() // Reload cart from database
+    } catch (error) {
+      console.error('Failed to remove item from cart:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const removeFromCart = (productId: string) => {
-    setCart((prevCart) => prevCart.filter((item) => item.product.id !== productId))
-  }
+  const clearCart = async () => {
+    if (!user?.id) {
+      console.error('User not authenticated')
+      return
+    }
 
-  const clearCart = () => {
-    setCart([])
+    try {
+      setLoading(true)
+      // Remove all items from cart
+      for (const item of cart) {
+        await removeFromCartDB(user.id, parseInt(item.product.id))
+      }
+      setCart([])
+    } catch (error) {
+      console.error('Failed to clear cart:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, updateQuantity, removeFromCart, clearCart }}>
+    <CartContext.Provider value={{ cart, addToCart, updateQuantity, removeFromCart, clearCart, loading }}>
       {children}
     </CartContext.Provider>
   )

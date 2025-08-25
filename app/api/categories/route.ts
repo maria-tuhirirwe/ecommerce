@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { getCategories } from "@/lib/api"
+import { getCategories, addCategory } from "@/app/api/apis"
 
 export async function GET() {
   try {
@@ -8,5 +8,21 @@ export async function GET() {
   } catch (error) {
     console.error("Error fetching categories:", error)
     return NextResponse.json({ error: "Failed to fetch categories" }, { status: 500 })
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const { name } = await request.json()
+    
+    if (!name) {
+      return NextResponse.json({ error: "Category name is required" }, { status: 400 })
+    }
+    
+    const category = await addCategory(name)
+    return NextResponse.json(category, { status: 201 })
+  } catch (error) {
+    console.error("Error creating category:", error)
+    return NextResponse.json({ error: "Failed to create category" }, { status: 500 })
   }
 }

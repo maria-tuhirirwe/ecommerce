@@ -1,4 +1,4 @@
-import { getCategories, getProducts } from "@/lib/api"
+import { getCategories, getProducts } from "@/app/api/apis"
 import ProductGrid from "@/components/ProductGrid"
 import CategoryFilter from "@/components/CategoryFilter"
 import { Suspense } from "react"

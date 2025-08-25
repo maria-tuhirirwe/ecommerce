@@ -7,7 +7,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { MessageCircle, DollarSign } from "lucide-react"
 import type { Product } from "@/lib/types"
 import { formatUGX, createBargainOffer } from "@/lib/api"
-import { isFirebaseConfigured } from "@/lib/firebase"
 
 interface BargainSectionProps {
   product: Product
@@ -38,32 +37,20 @@ export default function BargainSection({ product }: BargainSectionProps) {
       const offerPrice = Number.parseFloat(bargainPrice)
       const totalOffer = offerPrice * quantity
 
-      // Save bargain offer to Firebase (or mock if not configured)
-      if (isFirebaseConfigured()) {
-        await createBargainOffer({
-          productId: product.id,
-          customerName: customerName.trim(),
-          customerPhone: customerPhone.trim(),
-          offeredPrice: offerPrice,
-          quantity,
-          message: message.trim(),
-        })
-      } else {
-        // Mock save for demo purposes
-        console.log("Bargain offer saved (demo mode):", {
-          productId: product.id,
-          customerName: customerName.trim(),
-          customerPhone: customerPhone.trim(),
-          offeredPrice: offerPrice,
-          quantity,
-          message: message.trim(),
-        })
-      }
+      // Save bargain offer
+      await createBargainOffer({
+        productId: product.id,
+        customerName: customerName.trim(),
+        customerPhone: customerPhone.trim(),
+        offeredPrice: offerPrice,
+        quantity,
+        message: message.trim(),
+      })
 
       // Create WhatsApp message for bargaining
       let whatsappMessage = `Hi! I'm interested in bargaining for this product from TechHub:\n\n`
       whatsappMessage += `📱 Product: ${product.name}\n`
-      whatsappMessage += `💰 Listed Price: ${formatUGX(product.price)}\n`
+      whatsappMessage += `💰 Listed Price: ${formatUGX(product.price_cents)}\n`
       whatsappMessage += `🤝 My Offer: ${formatUGX(offerPrice)} per item\n`
       whatsappMessage += `📦 Quantity: ${quantity} ${quantity === 1 ? "pc" : "pcs"}\n`
       whatsappMessage += `💵 Total Offer: ${formatUGX(totalOffer)}\n`
@@ -105,20 +92,17 @@ export default function BargainSection({ product }: BargainSectionProps) {
   const calculateSavings = () => {
     if (!bargainPrice) return 0
     const offerPrice = Number.parseFloat(bargainPrice)
-    return product.price - offerPrice
+    return product.price_cents - offerPrice
   }
 
   const savingsAmount = calculateSavings()
-  const savingsPercentage = bargainPrice ? ((savingsAmount / product.price) * 100).toFixed(1) : "0"
+  const savingsPercentage = bargainPrice ? ((savingsAmount / product.price_cents) * 100).toFixed(1) : "0"
 
   return (
     <div className="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-xl p-6 border border-orange-200">
       <div className="flex items-center mb-4">
         <DollarSign className="text-orange-600 mr-2" size={24} />
         <h3 className="text-xl font-bold text-gray-800">Make an Offer</h3>
-        {!isFirebaseConfigured() && (
-          <span className="ml-2 text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded">Demo Mode</span>
-        )}
       </div>
 
       <p className="text-gray-600 mb-6">Think the price is too high? Make us an offer! We're open to negotiations.</p>
@@ -198,7 +182,7 @@ export default function BargainSection({ product }: BargainSectionProps) {
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="text-gray-600">Listed Price:</span>
-                <p className="font-semibold text-gray-800">{formatUGX(product.price)}</p>
+                <p className="font-semibold text-gray-800">{formatUGX(product.price_cents)}</p>
               </div>
               <div>
                 <span className="text-gray-600">Your Offer:</span>
@@ -252,9 +236,7 @@ export default function BargainSection({ product }: BargainSectionProps) {
       </div>
 
       <div className="mt-4 text-xs text-gray-500 text-center">
-        {isFirebaseConfigured()
-          ? "Your offer will be saved and sent directly to our sales team via WhatsApp"
-          : "Demo mode: Your offer will be sent via WhatsApp (not saved to database)"}
+        Your offer will be sent directly to our sales team via WhatsApp
       </div>
     </div>
   )

@@ -1,6 +1,7 @@
 "use client"
 import { useEffect, useState } from "react"
-import { getProducts, getCategories, formatUGX } from "@/lib/api"
+import { getProducts, getCategories, deleteProduct } from "@/app/api/apis"
+import { formatUGX } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -34,19 +35,21 @@ export default function ProductManagement() {
   }, [])
 
   const filteredProducts = products.filter((product) => {
-    const matchesSearch =
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesCategory = selectedCategory === "all" || product.categoryId === selectedCategory
     return matchesSearch && matchesCategory
   })
 
   const handleDeleteProduct = async (productId: string) => {
     if (confirm("Are you sure you want to delete this product?")) {
-      // TODO: Implement delete functionality with Firebase
-      console.log("Delete product:", productId)
-      // For now, just remove from local state
-      setProducts(products.filter((p) => p.id !== productId))
+      try {
+        await deleteProduct(Number(productId))
+        // Remove from local state
+        setProducts(products.filter((p) => p.id !== productId))
+      } catch (error) {
+        console.error("Error deleting product:", error)
+        alert("Failed to delete product. Please try again.")
+      }
     }
   }
 
@@ -154,7 +157,7 @@ export default function ProductManagement() {
               <CardHeader className="pb-3">
                 <div className="relative h-48 w-full mb-4">
                   <Image
-                    src={product.image || "/placeholder.svg"}
+                    src={(product.images && product.images[0]) || "/placeholder.svg"}
                     alt={product.name}
                     fill
                     className="object-cover rounded-lg"
@@ -168,12 +171,15 @@ export default function ProductManagement() {
                     </Badge>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-blue-600">{formatUGX(product.price)}</p>
+                    <p className="text-2xl font-bold text-blue-600">{formatUGX(product.price_cents)}</p>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <CardDescription className="line-clamp-2 mb-4">{product.description}</CardDescription>
+                <div className="mb-4">
+                  <p className="text-sm text-gray-600">Stock: {product.stock}</p>
+                  <p className="text-sm text-gray-600">Status: {product.active ? 'Active' : 'Inactive'}</p>
+                </div>
                 <div className="flex gap-2">
                   <Link href={`/admin/products/edit/${product.id}`} className="flex-1">
                     <Button variant="outline" className="w-full bg-transparent">

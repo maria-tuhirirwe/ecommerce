@@ -3,13 +3,24 @@
 import Link from "next/link"
 import { useState } from "react"
 import { useCart } from "@/context/CartContext"
-import { ShoppingCart, Menu, X, Smartphone } from "lucide-react"
+import { useAuth } from "@/context/AuthContext"
+import { ShoppingCart, Menu, X, Smartphone, User, LogOut } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const { cart } = useCart()
+  const { user, logout, userRole } = useAuth()
 
   const totalItems = cart.reduce((total, item) => total + item.quantity, 0)
+
+  const handleLogout = async () => {
+    try {
+      await logout()
+    } catch (error) {
+      console.error("Logout error:", error)
+    }
+  }
 
   return (
     <header className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 shadow-lg sticky top-0 z-50">
@@ -29,10 +40,59 @@ export default function Header() {
             <Link href="/shop" className="text-white font-medium hover:text-blue-200 transition-colors duration-200">
               Shop
             </Link>
+            {userRole === 'admin' && (
+              <Link href="/admin/dashboard" className="text-white font-medium hover:text-blue-200 transition-colors duration-200">
+                Admin Dashboard
+              </Link>
+            )}
           </nav>
 
-          {/* Cart Icon */}
-          <div className="flex items-center">
+          {/* Right Side Icons */}
+          <div className="flex items-center space-x-4">
+            {/* Authentication */}
+            {user ? (
+              <div className="hidden md:flex items-center space-x-4">
+                <div className="flex items-center space-x-2 text-white">
+                  <User size={20} />
+                  <div className="flex flex-col">
+                    <span className="text-sm">{user.email}</span>
+                    {userRole && <span className="text-xs text-blue-200 capitalize">{userRole}</span>}
+                  </div>
+                </div>
+                <Button
+                  onClick={handleLogout}
+                  variant="ghost"
+                  size="sm"
+                  className="text-white hover:text-blue-200 hover:bg-blue-700"
+                >
+                  <LogOut size={16} className="mr-1" />
+                  Logout
+                </Button>
+              </div>
+            ) : (
+              <div className="hidden md:flex items-center space-x-2">
+                <Link href="/login">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-white hover:text-blue-200 hover:bg-blue-700"
+                  >
+                    <User size={16} className="mr-1" />
+                    Login
+                  </Button>
+                </Link>
+                <Link href="/signup">
+                  <Button
+                    size="sm"
+                    className="bg-white text-blue-600 hover:bg-blue-50"
+                  >
+                    Sign Up
+                  </Button>
+                </Link>
+              </div>
+            )}
+
+            {/* Cart Icon */}
             <Link href="/cart" className="relative p-2 text-white hover:text-blue-200 transition-colors duration-200">
               <ShoppingCart size={28} />
               {totalItems > 0 && (
@@ -70,6 +130,63 @@ export default function Header() {
               >
                 Shop
               </Link>
+              {userRole === 'admin' && (
+                <Link
+                  href="/admin/dashboard"
+                  className="text-white font-medium hover:text-blue-200 transition-colors duration-200"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Admin Dashboard
+                </Link>
+              )}
+              
+              {/* Mobile Authentication */}
+              <div className="border-t border-blue-500 pt-4 mt-4">
+                {user ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2 text-white">
+                      <User size={16} />
+                      <div className="flex flex-col">
+                        <span className="text-sm">{user.email}</span>
+                        {userRole && <span className="text-xs text-blue-200 capitalize">{userRole}</span>}
+                      </div>
+                    </div>
+                    <Button
+                      onClick={() => {
+                        handleLogout()
+                        setIsMenuOpen(false)
+                      }}
+                      variant="ghost"
+                      size="sm"
+                      className="w-full text-white hover:text-blue-200 hover:bg-blue-700 justify-start"
+                    >
+                      <LogOut size={16} className="mr-2" />
+                      Logout
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Link href="/login" onClick={() => setIsMenuOpen(false)}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full text-white hover:text-blue-200 hover:bg-blue-700 justify-start"
+                      >
+                        <User size={16} className="mr-2" />
+                        Login
+                      </Button>
+                    </Link>
+                    <Link href="/signup" onClick={() => setIsMenuOpen(false)}>
+                      <Button
+                        size="sm"
+                        className="w-full bg-white text-blue-600 hover:bg-blue-50"
+                      >
+                        Sign Up
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+              </div>
             </div>
           </nav>
         )}

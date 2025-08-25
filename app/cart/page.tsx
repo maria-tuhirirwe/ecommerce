@@ -1,19 +1,45 @@
 "use client"
 
 import { useCart } from "@/context/CartContext"
+import { useAuth } from "@/context/AuthContext"
+import { useRouter } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Trash2, ShoppingBag } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { formatUGX } from "@/lib/api"
 
 export default function CartPage() {
-  const { cart, updateQuantity, removeFromCart, clearCart } = useCart()
+  const { cart, updateQuantity, removeFromCart, clearCart, loading: cartLoading } = useCart()
+  const { user, loading } = useAuth()
+  const router = useRouter()
   const [isCheckingOut, setIsCheckingOut] = useState(false)
+  const [actionLoading, setActionLoading] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/login")
+    }
+  }, [user, loading, router])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return null
+  }
 
   const totalAmount = cart.reduce((total, item) => {
-    return total + item.product.price * item.quantity
+    return total + item.product.price_cents * item.quantity
   }, 0)
 
   const handleCheckout = () => {
@@ -25,7 +51,7 @@ export default function CartPage() {
     cart.forEach((item) => {
       message += `📱 ${item.product.name}\n`
       message += `   Quantity: ${item.quantity} ${item.quantity === 1 ? "pc" : "pcs"}\n`
-      message += `   Price: ${formatUGX(item.product.price * item.quantity)}\n\n`
+      message += `   Price: ${formatUGX(item.product.price_cents * item.quantity)}\n\n`
     })
 
     message += `💰 Total Amount: ${formatUGX(totalAmount)}\n\n`
@@ -78,7 +104,7 @@ export default function CartPage() {
                   >
                     <div className="relative w-24 h-24 flex-shrink-0 mb-4 sm:mb-0 rounded-xl overflow-hidden">
                       <Image
-                        src={item.product.image || "/placeholder.svg?height=100&width=100"}
+                        src={(item.product.images && item.product.images[0]) || "/placeholder.svg?height=100&width=100"}
                         alt={item.product.name}
                         fill
                         className="object-cover"
@@ -87,7 +113,7 @@ export default function CartPage() {
 
                     <div className="flex-grow sm:ml-6 text-center sm:text-left">
                       <h3 className="text-lg font-semibold text-gray-800 mb-1">{item.product.name}</h3>
-                      <p className="text-blue-600 font-medium">{formatUGX(item.product.price)}</p>
+                      <p className="text-blue-600 font-medium">{formatUGX(item.product.price_cents)}</p>
                       <span className="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs mt-1">
                         {item.product.categoryName}
                       </span>
@@ -96,23 +122,38 @@ export default function CartPage() {
                     <div className="flex items-center mt-4 sm:mt-0 space-x-4">
                       <div className="flex items-center border border-gray-200 rounded-lg">
                         <button
-                          onClick={() => updateQuantity(item.product.id, Math.max(1, item.quantity - 1))}
-                          className="px-3 py-2 text-blue-600 hover:bg-blue-50 transition-colors duration-200"
+                          onClick={async () => {
+                            setActionLoading(`decrease-${item.product.id}`)
+                            await updateQuantity(item.product.id, Math.max(1, item.quantity - 1))
+                            setActionLoading(null)
+                          }}
+                          disabled={actionLoading === `decrease-${item.product.id}` || cartLoading}
+                          className="px-3 py-2 text-blue-600 hover:bg-blue-50 transition-colors duration-200 disabled:opacity-50"
                         >
                           -
                         </button>
                         <span className="px-4 py-2 font-medium">{item.quantity}</span>
                         <button
-                          onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                          className="px-3 py-2 text-blue-600 hover:bg-blue-50 transition-colors duration-200"
+                          onClick={async () => {
+                            setActionLoading(`increase-${item.product.id}`)
+                            await updateQuantity(item.product.id, item.quantity + 1)
+                            setActionLoading(null)
+                          }}
+                          disabled={actionLoading === `increase-${item.product.id}` || cartLoading}
+                          className="px-3 py-2 text-blue-600 hover:bg-blue-50 transition-colors duration-200 disabled:opacity-50"
                         >
                           +
                         </button>
                       </div>
 
                       <button
-                        onClick={() => removeFromCart(item.product.id)}
-                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                        onClick={async () => {
+                          setActionLoading(`remove-${item.product.id}`)
+                          await removeFromCart(item.product.id)
+                          setActionLoading(null)
+                        }}
+                        disabled={actionLoading === `remove-${item.product.id}` || cartLoading}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors duration-200 disabled:opacity-50"
                         aria-label="Remove item"
                       >
                         <Trash2 size={20} />
@@ -131,10 +172,15 @@ export default function CartPage() {
               </Link>
               <Button
                 variant="outline"
-                onClick={clearCart}
+                onClick={async () => {
+                  setActionLoading('clear')
+                  await clearCart()
+                  setActionLoading(null)
+                }}
+                disabled={actionLoading === 'clear' || cartLoading}
                 className="w-full sm:w-auto border-red-300 text-red-600 hover:bg-red-50"
               >
-                Clear Cart
+                {actionLoading === 'clear' ? 'Clearing...' : 'Clear Cart'}
               </Button>
             </div>
           </div>
@@ -149,7 +195,7 @@ export default function CartPage() {
                     <span className="text-gray-600">
                       {item.product.name} × {item.quantity}
                     </span>
-                    <span className="font-medium">{formatUGX(item.product.price * item.quantity)}</span>
+                    <span className="font-medium">{formatUGX(item.product.price_cents * item.quantity)}</span>
                   </div>
                 ))}
               </div>

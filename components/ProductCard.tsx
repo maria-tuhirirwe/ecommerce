@@ -9,7 +9,7 @@ export default function ProductCard({ product }: { product: Product }) {
       <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 overflow-hidden">
         <div className="relative h-64 overflow-hidden">
           <Image
-            src={product.image || "/placeholder.svg?height=300&width=300"}
+            src={(product.images && product.images[0]) || "/placeholder.svg?height=300&width=300"}
             alt={product.name}
             fill
             className="object-cover group-hover:scale-110 transition-transform duration-500"
@@ -24,9 +24,8 @@ export default function ProductCard({ product }: { product: Product }) {
           <h3 className="font-bold text-lg mb-2 text-gray-800 group-hover:text-blue-600 transition-colors duration-200 line-clamp-2">
             {product.name}
           </h3>
-          <p className="text-gray-600 text-sm mb-3 line-clamp-2">{product.description}</p>
           <div className="flex items-center justify-between">
-            <p className="font-bold text-xl text-blue-600">{formatUGX(product.price)}</p>
+            <p className="font-bold text-xl text-blue-600">{formatUGX(product.price_cents)}</p>
             <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
               <span className="text-white text-sm">→</span>
             </div>

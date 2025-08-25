@@ -1,28 +1,31 @@
-import { collection, getDocs, doc, getDoc, query, where, orderBy, limit, addDoc, Timestamp } from "firebase/firestore"
-import { db, isFirebaseConfigured } from "./firebase"
+
 import type { Category, Product } from "./types"
 
 // Mock data for categories - Electronics focused
 const mockCategories: Category[] = [
   {
-    id: "phones",
+    id: "1",
     name: "Phones",
-    image: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&h=300&fit=crop&crop=center",
+    slug: "phones",
+    description: "Latest smartphones and mobile devices",
   },
   {
-    id: "tablets",
+    id: "2",
     name: "Tablets",
-    image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400&h=300&fit=crop&crop=center",
+    slug: "tablets", 
+    description: "iPads, Android tablets and tablet accessories",
   },
   {
-    id: "accessories",
+    id: "3",
     name: "Accessories",
-    image: "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=400&h=300&fit=crop&crop=center",
+    slug: "accessories",
+    description: "Phone cases, chargers, headphones and more",
   },
   {
-    id: "laptops",
+    id: "4",
     name: "Laptops",
-    image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&h=300&fit=crop&crop=center",
+    slug: "laptops",
+    description: "MacBooks, Windows laptops and ultrabooks",
   },
 ]
 
@@ -31,111 +34,133 @@ const mockProducts: Product[] = [
   {
     id: "1",
     name: "iPhone 15 Pro",
-    description:
-      "Latest iPhone with A17 Pro chip, titanium design, and advanced camera system. Perfect for photography and gaming.",
-    price: 4500000, // UGX
-    image: "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=400&h=400&fit=crop&crop=center",
-    categoryId: "phones",
+    slug: "iphone-15-pro",
+    price_cents: 4500000,
+    stock: 10,
+    images: ["https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=400&h=400&fit=crop&crop=center"],
+    active: true,
+    categoryId: "1",
     categoryName: "Phones",
   },
   {
     id: "2",
     name: "Samsung Galaxy S24 Ultra",
-    description: "Premium Android smartphone with S Pen, 200MP camera, and AI-powered features.",
-    price: 4200000, // UGX
-    image: "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400&h=400&fit=crop&crop=center",
-    categoryId: "phones",
+    slug: "samsung-galaxy-s24-ultra",
+    price_cents: 4200000,
+    stock: 8,
+    images: ["https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400&h=400&fit=crop&crop=center"],
+    active: true,
+    categoryId: "1",
     categoryName: "Phones",
   },
   {
     id: "3",
     name: "AirPods Pro (3rd Gen)",
-    description: "Active noise cancellation, spatial audio, and all-day battery life. Perfect for music and calls.",
-    price: 850000, // UGX
-    image: "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=400&h=400&fit=crop&crop=center",
-    categoryId: "accessories",
+    slug: "airpods-pro-3rd-gen",
+    price_cents: 850000,
+    stock: 25,
+    images: ["https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=400&h=400&fit=crop&crop=center"],
+    active: true,
+    categoryId: "3",
     categoryName: "Accessories",
   },
   {
     id: "4",
     name: 'iPad Pro 12.9"',
-    description: "Powerful tablet with M2 chip, Liquid Retina XDR display, and Apple Pencil support.",
-    price: 3800000, // UGX
-    image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400&h=400&fit=crop&crop=center",
-    categoryId: "tablets",
+    slug: "ipad-pro-12-9",
+    price_cents: 3800000,
+    stock: 6,
+    images: ["https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400&h=400&fit=crop&crop=center"],
+    active: true,
+    categoryId: "2",
     categoryName: "Tablets",
   },
   {
     id: "5",
     name: 'MacBook Pro 14"',
-    description: "Professional laptop with M3 Pro chip, stunning Retina display, and all-day battery life.",
-    price: 7500000, // UGX
-    image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=400&fit=crop&crop=center",
-    categoryId: "laptops",
+    slug: "macbook-pro-14",
+    price_cents: 7500000,
+    stock: 4,
+    images: ["https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=400&fit=crop&crop=center"],
+    active: true,
+    categoryId: "4",
     categoryName: "Laptops",
   },
   {
     id: "6",
     name: "Samsung Galaxy Tab S9",
-    description: "Premium Android tablet with S Pen included, perfect for productivity and creativity.",
-    price: 2800000, // UGX
-    image: "https://images.unsplash.com/photo-1561154464-82e9adf32764?w=400&h=400&fit=crop&crop=center",
-    categoryId: "tablets",
+    slug: "samsung-galaxy-tab-s9",
+    price_cents: 2800000,
+    stock: 12,
+    images: ["https://images.unsplash.com/photo-1561154464-82e9adf32764?w=400&h=400&fit=crop&crop=center"],
+    active: true,
+    categoryId: "2",
     categoryName: "Tablets",
   },
   {
     id: "7",
     name: "iPhone 14",
-    description: "Reliable iPhone with great camera system, all-day battery, and durable design.",
-    price: 3200000, // UGX
-    image: "https://images.unsplash.com/photo-1678652197831-2d180705cd2c?w=400&h=400&fit=crop&crop=center",
-    categoryId: "phones",
+    slug: "iphone-14",
+    price_cents: 3200000,
+    stock: 15,
+    images: ["https://images.unsplash.com/photo-1678652197831-2d180705cd2c?w=400&h=400&fit=crop&crop=center"],
+    active: true,
+    categoryId: "1",
     categoryName: "Phones",
   },
   {
     id: "8",
     name: "Wireless Charging Pad",
-    description: "Fast wireless charging for all Qi-enabled devices. Sleek design with LED indicator.",
-    price: 180000, // UGX
-    image: "https://images.unsplash.com/photo-1609592806955-d3c1b508d0e5?w=400&h=400&fit=crop&crop=center",
-    categoryId: "accessories",
+    slug: "wireless-charging-pad",
+    price_cents: 180000,
+    stock: 30,
+    images: ["https://images.unsplash.com/photo-1609592806955-d3c1b508d0e5?w=400&h=400&fit=crop&crop=center"],
+    active: true,
+    categoryId: "3",
     categoryName: "Accessories",
   },
   {
     id: "9",
     name: "Phone Case & Screen Protector Set",
-    description: "Premium protection bundle with tempered glass screen protector and shock-resistant case.",
-    price: 120000, // UGX
-    image: "https://images.unsplash.com/photo-1556656793-08538906a9f8?w=400&h=400&fit=crop&crop=center",
-    categoryId: "accessories",
+    slug: "phone-case-screen-protector-set",
+    price_cents: 120000,
+    stock: 50,
+    images: ["https://images.unsplash.com/photo-1556656793-08538906a9f8?w=400&h=400&fit=crop&crop=center"],
+    active: true,
+    categoryId: "3",
     categoryName: "Accessories",
   },
   {
     id: "10",
     name: "Dell XPS 13",
-    description: "Ultra-portable laptop with Intel Core i7, stunning display, and premium build quality.",
-    price: 5500000, // UGX
-    image: "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=400&h=400&fit=crop&crop=center",
-    categoryId: "laptops",
+    slug: "dell-xps-13",
+    price_cents: 5500000,
+    stock: 7,
+    images: ["https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=400&h=400&fit=crop&crop=center"],
+    active: true,
+    categoryId: "4",
     categoryName: "Laptops",
   },
   {
     id: "11",
     name: "Sony WH-1000XM5 Headphones",
-    description: "Industry-leading noise canceling headphones with exceptional sound quality.",
-    price: 1200000, // UGX
-    image: "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=400&h=400&fit=crop&crop=center",
-    categoryId: "accessories",
+    slug: "sony-wh-1000xm5-headphones",
+    price_cents: 1200000,
+    stock: 18,
+    images: ["https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=400&h=400&fit=crop&crop=center"],
+    active: true,
+    categoryId: "3",
     categoryName: "Accessories",
   },
   {
     id: "12",
     name: "Google Pixel 8 Pro",
-    description: "AI-powered Android phone with exceptional camera and pure Google experience.",
-    price: 3800000, // UGX
-    image:
-      "https://res.cloudinary.com/dmfrd6tts/image/upload/v1748336121/Pixel_8_in_Rose.max-936x936.format-webp_yublx4.webp",
-    categoryId: "phones",
+    slug: "google-pixel-8-pro",
+    price_cents: 3800000,
+    stock: 9,
+    images: ["https://res.cloudinary.com/dmfrd6tts/image/upload/v1748336121/Pixel_8_in_Rose.max-936x936.format-webp_yublx4.webp"],
+    active: true,
+    categoryId: "1",
     categoryName: "Phones",
   },
 ]
@@ -153,32 +178,10 @@ export function formatUGX(amount: number): string {
   }).format(amount)
 }
 
-// API functions with Firebase fallback to mock data
+// API functions using mock data
 export async function getCategories(): Promise<Category[]> {
-  // If Firebase is not configured, use mock data
-  if (!isFirebaseConfigured() || !db) {
-    await delay(500)
-    return getMockCategories()
-  }
-
-  try {
-    const categoriesRef = collection(db, "categories")
-    const q = query(categoriesRef, where("isActive", "==", true), orderBy("sortOrder", "asc"))
-    const querySnapshot = await getDocs(q)
-
-    const categories = querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      name: doc.data().name,
-      image: doc.data().imageUrl,
-    })) as Category[]
-
-    return categories.length > 0 ? categories : getMockCategories()
-  } catch (error) {
-    console.error("Error fetching categories from Firebase:", error)
-    // Fallback to mock data if Firebase fails
-    await delay(500)
-    return getMockCategories()
-  }
+  await delay(500)
+  return getMockCategories()
 }
 
 export async function getCategoriesWithImages(): Promise<Category[]> {
@@ -186,212 +189,25 @@ export async function getCategoriesWithImages(): Promise<Category[]> {
 }
 
 export async function getProducts(categoryId?: string): Promise<Product[]> {
-  // If Firebase is not configured, use mock data
-  if (!isFirebaseConfigured() || !db) {
-    await delay(800)
-    return getMockProducts(categoryId)
-  }
-
-  try {
-    const productsRef = collection(db, "products")
-    let q = query(productsRef, where("isActive", "==", true), orderBy("createdAt", "desc"))
-
-    if (categoryId) {
-      q = query(productsRef, where("categoryId", "==", categoryId), where("isActive", "==", true))
-    }
-
-    const querySnapshot = await getDocs(q)
-    const products = querySnapshot.docs.map((doc) => {
-      const data = doc.data()
-      return {
-        id: doc.id,
-        name: data.name,
-        description: data.description,
-        price: data.price,
-        image: data.imageUrl,
-        categoryId: data.categoryId,
-        categoryName: "Loading...", // Will be filled below
-      }
-    }) as Product[]
-
-    // Get category names for products
-    if (products.length > 0) {
-      const categoriesMap = new Map()
-      const categories = await getCategories()
-      categories.forEach((cat) => categoriesMap.set(cat.id, cat.name))
-
-      return products.map((product) => ({
-        ...product,
-        categoryName: categoriesMap.get(product.categoryId) || "Unknown",
-      }))
-    }
-
-    return getMockProducts(categoryId)
-  } catch (error) {
-    console.error("Error fetching products from Firebase:", error)
-    // Fallback to mock data if Firebase fails
-    await delay(800)
-    return getMockProducts(categoryId)
-  }
+  await delay(800)
+  return getMockProducts(categoryId)
 }
 
 export async function getProductById(id: string): Promise<Product | undefined> {
-  // If Firebase is not configured, use mock data
-  if (!isFirebaseConfigured() || !db) {
-    await delay(500)
-    return getMockProducts().find((p) => p.id === id)
-  }
-
-  try {
-    const productRef = doc(db, "products", id)
-    const productSnap = await getDoc(productRef)
-
-    if (productSnap.exists()) {
-      const data = productSnap.data()
-      const product = {
-        id: productSnap.id,
-        name: data.name,
-        description: data.description,
-        price: data.price,
-        image: data.imageUrl,
-        categoryId: data.categoryId,
-        categoryName: "Loading...",
-      } as Product
-
-      // Get category name
-      try {
-        const categoryRef = doc(db, "categories", product.categoryId)
-        const categorySnap = await getDoc(categoryRef)
-        const categoryName = categorySnap.exists() ? categorySnap.data().name : "Unknown"
-
-        return {
-          ...product,
-          categoryName,
-        }
-      } catch (error) {
-        return {
-          ...product,
-          categoryName: "Unknown",
-        }
-      }
-    }
-    return undefined
-  } catch (error) {
-    console.error("Error fetching product from Firebase:", error)
-    // Fallback to mock data if Firebase fails
-    await delay(500)
-    return getMockProducts().find((p) => p.id === id)
-  }
+  await delay(500)
+  return getMockProducts().find((p) => p.id === id)
 }
 
 export async function getRecentProducts(limitCount = 4): Promise<Product[]> {
-  // If Firebase is not configured, use mock data
-  if (!isFirebaseConfigured() || !db) {
-    await delay(700)
-    return getMockProducts().slice(0, limitCount)
-  }
-
-  try {
-    const productsRef = collection(db, "products")
-    const q = query(productsRef, where("isActive", "==", true), orderBy("createdAt", "desc"), limit(limitCount))
-    const querySnapshot = await getDocs(q)
-
-    const products = querySnapshot.docs.map((doc) => {
-      const data = doc.data()
-      return {
-        id: doc.id,
-        name: data.name,
-        description: data.description,
-        price: data.price,
-        image: data.imageUrl,
-        categoryId: data.categoryId,
-        categoryName: "Loading...",
-      }
-    }) as Product[]
-
-    // Get category names
-    if (products.length > 0) {
-      const categoriesMap = new Map()
-      const categories = await getCategories()
-      categories.forEach((cat) => categoriesMap.set(cat.id, cat.name))
-
-      return products.map((product) => ({
-        ...product,
-        categoryName: categoriesMap.get(product.categoryId) || "Unknown",
-      }))
-    }
-
-    return getMockProducts().slice(0, limitCount)
-  } catch (error) {
-    console.error("Error fetching recent products from Firebase:", error)
-    // Fallback to mock data if Firebase fails
-    await delay(700)
-    return getMockProducts().slice(0, limitCount)
-  }
+  await delay(700)
+  return getMockProducts().slice(0, limitCount)
 }
 
 export async function getRelatedProducts(categoryId: string, limitCount = 4): Promise<Product[]> {
-  // If Firebase is not configured, use mock data
-  if (!isFirebaseConfigured() || !db) {
-    await delay(600)
-    return getMockProducts()
-      .filter((p) => p.categoryId === categoryId)
-      .slice(0, limitCount)
-  }
-
-  try {
-    const productsRef = collection(db, "products")
-    const q = query(
-      productsRef,
-      where("categoryId", "==", categoryId),
-      where("isActive", "==", true),
-      limit(limitCount),
-    )
-    const querySnapshot = await getDocs(q)
-
-    const products = querySnapshot.docs.map((doc) => {
-      const data = doc.data()
-      return {
-        id: doc.id,
-        name: data.name,
-        description: data.description,
-        price: data.price,
-        image: data.imageUrl,
-        categoryId: data.categoryId,
-        categoryName: "Loading...",
-      }
-    }) as Product[]
-
-    // Get category name
-    if (products.length > 0) {
-      try {
-        const categoryRef = doc(db, "categories", categoryId)
-        const categorySnap = await getDoc(categoryRef)
-        const categoryName = categorySnap.exists() ? categorySnap.data().name : "Unknown"
-
-        return products.map((product) => ({
-          ...product,
-          categoryName,
-        }))
-      } catch (error) {
-        return products.map((product) => ({
-          ...product,
-          categoryName: "Unknown",
-        }))
-      }
-    }
-
-    return getMockProducts()
-      .filter((p) => p.categoryId === categoryId)
-      .slice(0, limitCount)
-  } catch (error) {
-    console.error("Error fetching related products from Firebase:", error)
-    // Fallback to mock data if Firebase fails
-    await delay(600)
-    return getMockProducts()
-      .filter((p) => p.categoryId === categoryId)
-      .slice(0, limitCount)
-  }
+  await delay(600)
+  return getMockProducts()
+    .filter((p) => p.categoryId === categoryId)
+    .slice(0, limitCount)
 }
 
 // Bargain offer functions
@@ -404,25 +220,8 @@ export async function createBargainOffer(offer: {
   quantity: number
   message?: string
 }) {
-  // If Firebase is not configured, just return a mock ID
-  if (!isFirebaseConfigured() || !db) {
-    console.log("Bargain offer (mock):", offer)
-    return `mock_${Date.now()}`
-  }
-
-  try {
-    const bargainOffersRef = collection(db, "bargain_offers")
-    const docRef = await addDoc(bargainOffersRef, {
-      ...offer,
-      totalOffer: offer.offeredPrice * offer.quantity,
-      status: "pending",
-      createdAt: Timestamp.now(),
-    })
-    return docRef.id
-  } catch (error) {
-    console.error("Error creating bargain offer:", error)
-    throw error
-  }
+  console.log("Bargain offer:", offer)
+  return `mock_${Date.now()}`
 }
 
 // Order functions
@@ -433,34 +232,9 @@ export async function createOrder(order: {
   items: any[]
   total: number
 }) {
-  // If Firebase is not configured, just return a mock order
-  if (!isFirebaseConfigured() || !db) {
-    const mockOrderNumber = `TH${Date.now()}`
-    console.log("Order (mock):", { ...order, orderNumber: mockOrderNumber })
-    return { id: `mock_${Date.now()}`, orderNumber: mockOrderNumber }
-  }
-
-  try {
-    const ordersRef = collection(db, "orders")
-    const orderNumber = `TH${Date.now()}`
-
-    const docRef = await addDoc(ordersRef, {
-      ...order,
-      orderNumber,
-      subtotal: order.total,
-      discount: 0,
-      status: "pending",
-      paymentMethod: "whatsapp",
-      deliveryMethod: "delivery",
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
-    })
-
-    return { id: docRef.id, orderNumber }
-  } catch (error) {
-    console.error("Error creating order:", error)
-    throw error
-  }
+  const mockOrderNumber = `TH${Date.now()}`
+  console.log("Order:", { ...order, orderNumber: mockOrderNumber })
+  return { id: `mock_${Date.now()}`, orderNumber: mockOrderNumber }
 }
 
 // Mock data fallbacks

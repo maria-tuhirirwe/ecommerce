@@ -1,12 +1,12 @@
 import Link from "next/link"
 import Image from "next/image"
-import { getCategoriesWithImages, getRecentProducts } from "@/lib/api"
+import { getCategories, getProducts } from "@/app/api/apis"
 import CategoryCard from "@/components/CategoryCard"
 import ProductCard from "@/components/ProductCard"
 
 export default async function Home() {
-  const categories = await getCategoriesWithImages()
-  const recentProducts = await getRecentProducts()
+  const categories = await getCategories()
+  const recentProducts = await getProducts()
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">

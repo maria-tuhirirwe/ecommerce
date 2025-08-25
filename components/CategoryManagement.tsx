@@ -1,6 +1,6 @@
 "use client"
 import { useEffect, useState } from "react"
-import { getCategories } from "@/lib/api"
+import { getCategories, deleteCategory } from "@/app/api/apis"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -35,10 +35,14 @@ export default function CategoryManagement() {
 
   const handleDeleteCategory = async (categoryId: string) => {
     if (confirm("Are you sure you want to delete this category? This will affect all products in this category.")) {
-      // TODO: Implement delete functionality with Firebase
-      console.log("Delete category:", categoryId)
-      // For now, just remove from local state
-      setCategories(categories.filter((c) => c.id !== categoryId))
+      try {
+        await deleteCategory(Number(categoryId))
+        // Remove from local state
+        setCategories(categories.filter((c) => c.id !== categoryId))
+      } catch (error) {
+        console.error("Error deleting category:", error)
+        alert("Failed to delete category. Please try again.")
+      }
     }
   }
 

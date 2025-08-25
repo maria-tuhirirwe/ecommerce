@@ -1,4 +1,5 @@
-import { getProductById, getRelatedProducts, formatUGX } from "@/lib/api"
+import { getProductById, getRelatedProducts } from "@/app/api/apis"
+import { formatUGX } from "@/lib/api"
 import { notFound } from "next/navigation"
 import Image from "next/image"
 import AddToCartButton from "@/components/AddToCartButton"
@@ -12,7 +13,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
     notFound()
   }
 
-  const relatedProducts = await getRelatedProducts(product.categoryId)
+  const relatedProducts = await getRelatedProducts(product.categoryId, params.id)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -22,7 +23,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
             {/* Product Image */}
             <div className="relative h-[500px] rounded-xl overflow-hidden bg-gray-100">
               <Image
-                src={product.image || "/placeholder.svg?height=500&width=500"}
+                src={(product.images && product.images[0]) || "/placeholder.svg?height=500&width=500"}
                 alt={product.name}
                 fill
                 className="object-cover"
@@ -38,11 +39,16 @@ export default async function ProductPage({ params }: { params: { id: string } }
               </div>
 
               <h1 className="text-4xl font-bold mb-4 text-gray-800">{product.name}</h1>
-              <p className="text-3xl font-bold mb-6 text-blue-600">{formatUGX(product.price)}</p>
+              <p className="text-3xl font-bold mb-6 text-blue-600">{formatUGX(product.price_cents)}</p>
+
+              {/* {product.description && ( */}
+                <div className="mb-8">
+                  <p className="text-gray-600 leading-relaxed">{product.description}</p>
+                </div>
+              {/* )} */}
 
               <div className="mb-8">
-                <h2 className="text-xl font-semibold mb-3 text-gray-800">Description</h2>
-                <p className="text-gray-600 leading-relaxed">{product.description}</p>
+                <p className="text-gray-600 leading-relaxed">Stock: {product.stock} available</p>
               </div>
 
               {/* Add to Cart Section */}
