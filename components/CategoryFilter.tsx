@@ -29,9 +29,9 @@ export default function CategoryFilter({
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-6">
-      <h2 className="text-xl font-bold mb-6 text-gray-800">Categories</h2>
-      <ul className="space-y-3">
+    <div className="bg-white rounded-2xl shadow-lg p-4">
+      <h2 className="text-xl font-bold mb-4 text-gray-800">Categories</h2>
+      <ul className="space-y-1">
         <li>
           {onCategoryChange ? (
             <button
@@ -62,7 +62,7 @@ export default function CategoryFilter({
             {onCategoryChange ? (
               <button
                 onClick={() => handleCategoryClick(category.id)}
-                className={`block w-full text-left p-3 rounded-xl transition-all duration-200 ${
+                className={`block w-full text-left p-2 rounded-xl transition-all duration-200 ${
                   selectedCategory === category.id
                     ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md"
                     : "hover:bg-blue-50 text-gray-700"
@@ -73,7 +73,7 @@ export default function CategoryFilter({
             ) : (
               <Link
                 href={`${pathname}?${createQueryString("category", category.id)}`}
-                className={`block p-3 rounded-xl transition-all duration-200 ${
+                className={`block p-2 rounded-xl transition-all duration-200 ${
                   selectedCategory === category.id
                     ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md"
                     : "hover:bg-blue-50 text-gray-700"

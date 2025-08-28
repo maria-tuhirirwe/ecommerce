@@ -1,9 +1,8 @@
 "use client"
 import Link from "next/link"
-import Image from "next/image"
 import { useEffect, useState } from "react"
 import { getCategories, getProducts } from "@/app/api/apis"
-import CategoryCard from "@/components/CategoryCard"
+import CategoryCarousel from "@/components/CategoryCarousel"
 import ProductCard from "@/components/ProductCard"
 import type { Category, Product } from "@/lib/types"
 
@@ -78,23 +77,7 @@ export default function Home() {
             </h2>
             <p className="text-gray-600 text-lg">Discover our wide range of electronics</p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {categories.length > 0 ? (
-              categories.map((category) => (
-                <CategoryCard key={category.id} category={category} />
-              ))
-            ) : (
-              <div className="col-span-full text-center py-12 text-gray-600">
-                <p>No categories available at the moment.</p>
-                <Link
-                  href="/shop"
-                  className="text-blue-600 hover:text-blue-700 font-medium mt-2 inline-block"
-                >
-                  Browse products →
-                </Link>
-              </div>
-            )}
-          </div>
+          <CategoryCarousel categories={categories} />
         </section>
 
         {/* Recent Products Section */}
@@ -107,18 +90,18 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
             {recentProducts.length > 0 ? (
-              recentProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+              recentProducts.slice(0, 4).map((product) => (
+              <ProductCard key={product.id} product={product} />
               ))
             ) : (
               <div className="col-span-full text-center py-12 text-gray-600">
-                <p>No products available at the moment.</p>
-                <Link
-                  href="/shop"
-                  className="text-blue-600 hover:text-blue-700 font-medium mt-2 inline-block"
-                >
-                  Visit shop page →
-                </Link>
+              <p>No products available at the moment.</p>
+              <Link
+                href="/shop"
+                className="text-blue-600 hover:text-blue-700 font-medium mt-2 inline-block"
+              >
+                Visit shop page →
+              </Link>
               </div>
             )}
           </div>
