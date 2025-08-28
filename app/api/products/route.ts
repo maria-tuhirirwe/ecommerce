@@ -1,8 +1,13 @@
 import { NextResponse } from "next/server"
 import { getProducts, addProduct } from "@/app/api/apis"
+import { isSupabaseConfigured } from "@/app/supabaseClient"
 
 export async function GET(request: Request) {
   try {
+    if (!isSupabaseConfigured) {
+      return NextResponse.json({ error: "Supabase not configured" }, { status: 503 })
+    }
+    
     const { searchParams } = new URL(request.url)
     const categoryId = searchParams.get("category")
 
@@ -16,6 +21,10 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    if (!isSupabaseConfigured) {
+      return NextResponse.json({ error: "Supabase not configured" }, { status: 503 })
+    }
+    
     const productData = await request.json()
     
     if (!productData.name || !productData.price_cents || !productData.category_id) {

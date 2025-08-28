@@ -59,7 +59,12 @@ export async function getProductById(id: string) {
   
   const { data, error } = await supabase
     .from('products')
-    .select('id, name, slug, description, price_cents, stock, images, active, category_id, created_at, updated_at')
+    .select(`
+      id, name, slug, description, price_cents, stock, images, active, category_id, created_at, updated_at,
+      categories (
+        name
+      )
+    `)
     .eq('id', parseInt(id))
     .single()
   
@@ -67,13 +72,6 @@ export async function getProductById(id: string) {
     if (error.code === 'PGRST116') return null // Not found
     throw error
   }
-  
-  // Get category name
-  const { data: category } = await supabase
-    .from('categories')
-    .select('name')
-    .eq('id', data.category_id)
-    .single()
   
   return {
     id: data.id.toString(),
@@ -85,7 +83,7 @@ export async function getProductById(id: string) {
     description: data.description,
     active: data.active,
     categoryId: data.category_id.toString(),
-    categoryName: category?.name || 'Unknown',
+    categoryName: (data.categories as any)?.name || 'Unknown',
     created_at: data.created_at,
     updated_at: data.updated_at
   }
@@ -98,7 +96,12 @@ export async function getRelatedProducts(categoryId: string, excludeId?: string)
   
   let query = supabase
     .from('products')
-    .select('id, name, slug, description, price_cents, stock, images, active, category_id, created_at, updated_at')
+    .select(`
+      id, name, slug, description, price_cents, stock, images, active, category_id, created_at, updated_at,
+      categories (
+        name
+      )
+    `)
     .eq('category_id', parseInt(categoryId))
     .order('created_at', { ascending: false })
     .limit(4)
@@ -111,13 +114,6 @@ export async function getRelatedProducts(categoryId: string, excludeId?: string)
   
   if (error) throw error
   
-  // Get category names
-  const { data: categories } = await supabase
-    .from('categories')
-    .select('id, name')
-  
-  const categoryMap = new Map(categories?.map(cat => [cat.id, cat.name]) || [])
-  
   return (data || []).map(product => ({
     id: product.id.toString(),
     name: product.name,
@@ -128,7 +124,7 @@ export async function getRelatedProducts(categoryId: string, excludeId?: string)
     description: product.description,
     active: product.active,
     categoryId: product.category_id.toString(),
-    categoryName: categoryMap.get(product.category_id) || 'Unknown',
+    categoryName: (product.categories as any)?.name || 'Unknown',
     created_at: product.created_at,
     updated_at: product.updated_at
   }))

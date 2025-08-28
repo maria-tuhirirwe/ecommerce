@@ -48,7 +48,7 @@ export default function BargainSection({ product }: BargainSectionProps) {
       })
 
       // Create WhatsApp message for bargaining
-      let whatsappMessage = `Hi! I'm interested in bargaining for this product from TechHub:\n\n`
+      let whatsappMessage = `Hi! I'm interested in bargaining for this product from Vital Electronics:\n\n`
       whatsappMessage += `📱 Product: ${product.name}\n`
       whatsappMessage += `💰 Listed Price: ${formatUGX(product.price_cents)}\n`
       whatsappMessage += `🤝 My Offer: ${formatUGX(offerPrice)} per item\n`

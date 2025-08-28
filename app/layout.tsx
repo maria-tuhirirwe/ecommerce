@@ -10,7 +10,7 @@ import { AuthProvider } from "@/context/AuthContext"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Tech-hub Store",
+  title: "Vital Electronics",
   description: "Shop with ease and checkout via WhatsApp",
     generator: 'v0.dev'
 }

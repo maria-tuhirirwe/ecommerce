@@ -1,8 +1,13 @@
 import { NextResponse } from "next/server"
 import { getCategories, addCategory } from "@/app/api/apis"
+import { isSupabaseConfigured } from "@/app/supabaseClient"
 
 export async function GET() {
   try {
+    if (!isSupabaseConfigured) {
+      return NextResponse.json({ error: "Supabase not configured" }, { status: 503 })
+    }
+    
     const categories = await getCategories()
     return NextResponse.json(categories)
   } catch (error) {
@@ -13,6 +18,10 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    if (!isSupabaseConfigured) {
+      return NextResponse.json({ error: "Supabase not configured" }, { status: 503 })
+    }
+    
     const { name } = await request.json()
     
     if (!name) {

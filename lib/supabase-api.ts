@@ -121,8 +121,8 @@ export async function getSupabaseProducts(categoryId?: string): Promise<Product[
     stock: product.stock,
     images: product.images,
     active: product.active,
-    categoryId: product.category_id.toString(),
-    categoryName: categoryMap.get(product.category_id) || 'Unknown',
+    categoryId: product.category_id?.toString() || 'uncategorized',
+    categoryName: categoryMap.get(product.category_id) || 'Uncategorized',
     created_at: product.created_at,
     updated_at: product.updated_at
   }))
@@ -206,7 +206,7 @@ export async function getSupabaseProductById(id: string): Promise<Product | null
     stock: product.stock,
     images: product.images,
     active: product.active,
-    categoryId: product.category_id.toString(),
+    categoryId: product.category_id?.toString() || 'uncategorized',
     categoryName: category?.name || 'Unknown',
     created_at: product.created_at,
     updated_at: product.updated_at
@@ -243,50 +243,66 @@ export async function addToCart(userId: string, productId: number, qty: number, 
     throw new Error('Supabase is not configured')
   }
 
-  // First check if item already exists in cart
-  const { data: existingItem, error: checkError } = await supabase
+  // Try to insert first, if it fails due to duplicate, then update
+  const { data: insertData, error: insertError } = await supabase
     .from('cart_items')
-    .select('id, qty')
-    .eq('user_id', userId)
-    .eq('product_id', productId)
-    .single();
+    .insert({
+      user_id: userId,
+      product_id: productId,
+      qty,
+      price_cents_at_add: priceCents
+    })
+    .select();
 
-  if (checkError && checkError.code !== 'PGRST116') {
-    console.error('Error checking existing cart item:', checkError);
-    return null;
-  }
+  if (insertError) {
+    // Check if it's a duplicate key error (item already exists)
+    if (insertError.code === '23505' || insertError.message?.includes('duplicate') || insertError.message?.includes('unique constraint')) {
+      console.log('Item exists in cart, updating quantity');
+      
+      // Item already exists, update quantity by adding to existing
+      const { data: updateData, error: updateError } = await supabase
+        .from('cart_items')
+        .update({ qty: supabase.rpc('increment', { x: qty }) })
+        .eq('user_id', userId)
+        .eq('product_id', productId)
+        .select();
 
-  if (existingItem) {
-    // Update existing item by adding to current quantity
-    const { data, error } = await supabase
-      .from('cart_items')
-      .update({ qty: existingItem.qty + qty })
-      .eq('id', existingItem.id)
-      .select();
+      if (updateError) {
+        // If RPC doesn't work, try manual approach
+        console.log('RPC failed, trying manual update');
+        
+        const { data: existingItem, error: checkError } = await supabase
+          .from('cart_items')
+          .select('id, qty')
+          .eq('user_id', userId)
+          .eq('product_id', productId)
+          .single();
 
-    if (error) {
-      console.error('Cart update error:', error);
+        if (checkError) {
+          console.error('Error checking existing cart item:', checkError);
+          return null;
+        }
+
+        const { data: manualUpdateData, error: manualUpdateError } = await supabase
+          .from('cart_items')
+          .update({ qty: existingItem.qty + qty })
+          .eq('id', existingItem.id)
+          .select();
+
+        if (manualUpdateError) {
+          console.error('Cart manual update error:', manualUpdateError);
+          return null;
+        }
+        return manualUpdateData;
+      }
+      return updateData;
+    } else {
+      console.error('Cart insert error:', insertError);
       return null;
     }
-    return data;
-  } else {
-    // Insert new item
-    const { data, error } = await supabase
-      .from('cart_items')
-      .insert({
-        user_id: userId,
-        product_id: productId,
-        qty,
-        price_cents_at_add: priceCents
-      })
-      .select();
-
-    if (error) {
-      console.error('Cart insert error:', error);
-      return null;
-    }
-    return data;
   }
+
+  return insertData;
 }
 
 export async function removeFromCart(userId: string, productId: number) {
@@ -311,7 +327,7 @@ export async function getCartItems(userId: string): Promise<CartItem[]> {
   // First get cart items
   const { data: cartItems, error: cartError } = await supabase
     .from('cart_items')
-    .select('id, product_id, qty, price_cents_at_add')
+    .select('id, user_id, product_id, qty, price_cents_at_add')
     .eq('user_id', userId);
 
   if (cartError) {
@@ -342,6 +358,7 @@ export async function getCartItems(userId: string): Promise<CartItem[]> {
     const product = products?.find(p => p.id === cartItem.product_id);
     return {
       id: cartItem.id,
+      user_id: cartItem.user_id,
       product_id: cartItem.product_id,
       qty: cartItem.qty,
       price_cents_at_add: cartItem.price_cents_at_add,

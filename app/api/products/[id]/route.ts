@@ -1,8 +1,13 @@
 import { NextResponse } from "next/server"
 import { getProductById, updateProduct, deleteProduct } from "@/app/api/apis"
+import { isSupabaseConfigured } from "@/app/supabaseClient"
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
+    if (!isSupabaseConfigured) {
+      return NextResponse.json({ error: "Supabase not configured" }, { status: 503 })
+    }
+    
     const product = await getProductById(params.id)
 
     if (!product) {
@@ -18,6 +23,10 @@ export async function GET(request: Request, { params }: { params: { id: string }
 
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
+    if (!isSupabaseConfigured) {
+      return NextResponse.json({ error: "Supabase not configured" }, { status: 503 })
+    }
+    
     const updates = await request.json()
     
     await updateProduct(Number(params.id), updates)
@@ -33,6 +42,10 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   try {
+    if (!isSupabaseConfigured) {
+      return NextResponse.json({ error: "Supabase not configured" }, { status: 503 })
+    }
+    
     await deleteProduct(Number(params.id))
     return NextResponse.json({ message: "Product deleted successfully" })
   } catch (error) {

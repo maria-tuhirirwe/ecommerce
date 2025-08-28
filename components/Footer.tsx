@@ -9,7 +9,7 @@ export default function Footer() {
           <div>
             <div className="flex items-center space-x-2 mb-4">
               <Smartphone size={32} className="text-blue-400" />
-              <span className="text-2xl font-bold">TechHub</span>
+              <span className="text-2xl font-bold">Vital Electronics</span>
             </div>
             <p className="text-gray-300 mb-4">
               Uganda's premier electronics store. Quality phones, tablets, laptops & accessories with WhatsApp checkout
@@ -81,7 +81,7 @@ export default function Footer() {
             <div className="space-y-3">
               <div className="flex items-center space-x-2">
                 <Mail size={16} className="text-blue-400" />
-                <span className="text-gray-300">techhub@gmail.com</span>
+                <span className="text-gray-300">vitalelctronics@gmail.com</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Phone size={16} className="text-blue-400" />

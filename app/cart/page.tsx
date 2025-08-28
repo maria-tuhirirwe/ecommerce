@@ -46,7 +46,7 @@ export default function CartPage() {
     setIsCheckingOut(true)
 
     // Create WhatsApp message
-    let message = "Hi! I'm interested in purchasing the following items from TechHub:\n\n"
+    let message = "Hi! I'm interested in purchasing the following items from Vital Electronics:\n\n"
 
     cart.forEach((item) => {
       message += `📱 ${item.product.name}\n`

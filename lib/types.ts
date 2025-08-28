@@ -3,6 +3,7 @@ export interface Category {
   name: string
   slug: string
   description?: string
+  image?: string
   created_at?: string
 }
 
@@ -11,8 +12,10 @@ export interface Product {
   name: string
   slug: string
   description?: string
+  price?: number
   price_cents: number
   stock: number
+  image?: string
   images?: string[]
   active: boolean
   categoryId: string

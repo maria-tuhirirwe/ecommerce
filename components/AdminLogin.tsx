@@ -37,7 +37,7 @@ export default function AdminLogin() {
           <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
             Admin Login
           </CardTitle>
-          <CardDescription>Sign in to access the TechHub admin dashboard</CardDescription>
+          <CardDescription>Sign in to access the Vital Electronics admin dashboard</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -56,7 +56,7 @@ export default function AdminLogin() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@techhub.ug"
+                placeholder="admin@vital.ug"
                 required
               />
             </div>

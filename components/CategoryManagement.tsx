@@ -4,6 +4,7 @@ import { getCategories, deleteCategory } from "@/app/api/apis"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import Link from "next/link"
 import Image from "next/image"
 import { Plus, Search, Edit, Trash2, Folder } from "lucide-react"
@@ -13,6 +14,8 @@ export default function CategoryManagement() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(10)
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -32,6 +35,17 @@ export default function CategoryManagement() {
   const filteredCategories = categories.filter((category) =>
     category.name.toLowerCase().includes(searchTerm.toLowerCase()),
   )
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredCategories.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const paginatedCategories = filteredCategories.slice(startIndex, endIndex)
+
+  // Reset to first page when search changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm])
 
   const handleDeleteCategory = async (categoryId: string) => {
     if (confirm("Are you sure you want to delete this category? This will affect all products in this category.")) {
@@ -94,6 +108,9 @@ export default function CategoryManagement() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{filteredCategories.length}</div>
+              <p className="text-xs text-muted-foreground">
+                {totalPages > 1 ? `Page ${currentPage} of ${totalPages}` : 'All results shown'}
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -116,41 +133,94 @@ export default function CategoryManagement() {
           </CardContent>
         </Card>
 
-        {/* Categories Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredCategories.map((category) => (
-            <Card key={category.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="relative h-40 w-full mb-4">
-                  <Image
-                    src={category.image || "/placeholder.svg"}
-                    alt={category.name}
-                    fill
-                    className="object-cover rounded-lg"
-                  />
+        {/* Categories Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Categories</CardTitle>
+            <CardContent className="text-sm text-muted-foreground">
+              Showing {startIndex + 1}-{Math.min(endIndex, filteredCategories.length)} of {filteredCategories.length} categories
+            </CardContent>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedCategories.map((category) => (
+                  <TableRow key={category.id}>
+                    <TableCell>
+                      <div className="relative h-16 w-16 flex-shrink-0">
+                        <Image
+                          src={category.image || "/placeholder.svg"}
+                          alt={category.name}
+                          fill
+                          className="object-cover rounded-md"
+                        />
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex flex-col">
+                        <span className="text-lg font-semibold">{category.name}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {category.description || "No description"}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end space-x-2">
+                        <Link href={`/admin/categories/edit/${category.id}`}>
+                          <Button variant="outline" size="sm">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteCategory(category.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between space-x-2 py-4">
+                <div className="text-sm text-muted-foreground">
+                  Page {currentPage} of {totalPages}
                 </div>
-                <CardTitle className="text-lg text-center">{category.name}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-2">
-                  <Link href={`/admin/categories/edit/${category.id}`} className="flex-1">
-                    <Button variant="outline" className="w-full bg-transparent">
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit
-                    </Button>
-                  </Link>
+                <div className="flex space-x-2">
                   <Button
                     variant="outline"
-                    onClick={() => handleDeleteCategory(category.id)}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {filteredCategories.length === 0 && (
           <Card className="text-center py-12">

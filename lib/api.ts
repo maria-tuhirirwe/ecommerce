@@ -170,7 +170,7 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 // Helper function to format UGX currency
 export function formatUGX(amount: number): string {
-  return new Intl.NumberFormat("en-UG", {
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "UGX",
     minimumFractionDigits: 0,

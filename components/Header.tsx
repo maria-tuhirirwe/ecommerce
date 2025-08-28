@@ -29,7 +29,7 @@ export default function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2 text-white">
             <Smartphone size={32} className="text-blue-200" />
-            <span className="text-2xl font-bold">TechHub</span>
+            <span className="text-2xl font-bold">Vital Electronics</span>
           </Link>
 
           {/* Desktop Navigation */}

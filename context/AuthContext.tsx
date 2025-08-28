@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [userRole, setUserRole] = useState<string | null>(null)
 
-  const isAdmin = userRole === 'admin' || user?.email === "admin@techhub.ug" || user?.email?.endsWith("@techhub.ug") || false
+  const isAdmin = userRole === 'admin' || user?.email === "admin@vitalelectronics.ug" || user?.email?.endsWith("@vitalelectronics.ug") || false
 
   // Cache for user roles to prevent repeated fetches
   const roleCache = React.useRef<Record<string, string>>({})

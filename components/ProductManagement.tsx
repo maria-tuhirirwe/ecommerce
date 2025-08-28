@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import Link from "next/link"
 import Image from "next/image"
 import { Plus, Search, Edit, Trash2, Package } from "lucide-react"
@@ -17,6 +18,8 @@ export default function ProductManagement() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(10)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -39,6 +42,17 @@ export default function ProductManagement() {
     const matchesCategory = selectedCategory === "all" || product.categoryId === selectedCategory
     return matchesSearch && matchesCategory
   })
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const paginatedProducts = filteredProducts.slice(startIndex, endIndex)
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, selectedCategory])
 
   const handleDeleteProduct = async (productId: string) => {
     if (confirm("Are you sure you want to delete this product?")) {
@@ -150,55 +164,117 @@ export default function ProductManagement() {
           </CardContent>
         </Card>
 
-        {/* Products Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProducts.map((product) => (
-            <Card key={product.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="relative h-48 w-full mb-4">
-                  <Image
-                    src={(product.images && product.images[0]) || "/placeholder.svg"}
-                    alt={product.name}
-                    fill
-                    className="object-cover rounded-lg"
-                  />
+        {/* Products Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Products</CardTitle>
+            <CardDescription>
+              Showing {startIndex + 1}-{Math.min(endIndex, filteredProducts.length)} of {filteredProducts.length} products
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Product</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Price</TableHead>
+                  <TableHead>Stock</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedProducts.map((product) => (
+                  <TableRow key={product.id}>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center space-x-3">
+                        <div className="relative h-12 w-12 flex-shrink-0">
+                          <Image
+                            src={(product.images && product.images[0]) || "/placeholder.svg"}
+                            alt={product.name}
+                            fill
+                            className="object-cover rounded-md"
+                          />
+                        </div>
+                        <div>
+                          <div className="font-medium">{product.name}</div>
+                          <div className="text-sm text-muted-foreground truncate max-w-[200px]">
+                            {product.description || "No description"}
+                          </div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">{product.categoryName}</Badge>
+                    </TableCell>
+                    <TableCell className="font-semibold text-blue-600">
+                      {formatUGX(product.price_cents)}
+                    </TableCell>
+                    <TableCell>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        product.stock > 10 ? 'bg-green-100 text-green-800' :
+                        product.stock > 0 ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {product.stock} units
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={product.active ? "default" : "secondary"}>
+                        {product.active ? 'Active' : 'Inactive'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end space-x-2">
+                        <Link href={`/admin/products/edit/${product.id}`}>
+                          <Button variant="outline" size="sm">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteProduct(product.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between space-x-2 py-4">
+                <div className="text-sm text-muted-foreground">
+                  Page {currentPage} of {totalPages}
                 </div>
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg line-clamp-1">{product.name}</CardTitle>
-                    <Badge variant="secondary" className="mt-1">
-                      {product.categoryName}
-                    </Badge>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-blue-600">{formatUGX(product.price_cents)}</p>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="mb-4">
-                  <p className="text-sm text-gray-600">Stock: {product.stock}</p>
-                  <p className="text-sm text-gray-600">Status: {product.active ? 'Active' : 'Inactive'}</p>
-                </div>
-                <div className="flex gap-2">
-                  <Link href={`/admin/products/edit/${product.id}`} className="flex-1">
-                    <Button variant="outline" className="w-full bg-transparent">
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit
-                    </Button>
-                  </Link>
+                <div className="flex space-x-2">
                   <Button
                     variant="outline"
-                    onClick={() => handleDeleteProduct(product.id)}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {filteredProducts.length === 0 && (
           <Card className="text-center py-12">
