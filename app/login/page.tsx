@@ -76,7 +76,7 @@ export default function LoginPage() {
             </Alert>
           )}
           
-          <Button
+          {/* <Button
             onClick={handleGoogleLogin}
             variant="outline"
             className="w-full"
@@ -101,7 +101,7 @@ export default function LoginPage() {
               />
             </svg>
             Continue with Google
-          </Button>
+          </Button> */}
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">

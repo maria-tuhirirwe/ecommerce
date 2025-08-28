@@ -158,14 +158,14 @@ export default function SignUpPage() {
             >
               {loading ? "Creating Account..." : "Create Account"}
             </Button>
-            <Button
+            {/* <Button
               onClick={handleGoogleSignIn}
               disabled={googleLoading || loading}
               variant="outline"
               type="button"
             >
               {googleLoading ? "Signing in with Google..." : "Sign in with Google"}
-            </Button>
+            </Button> */}
             <p className="text-sm text-center text-gray-600">
               Already have an account?{" "}
               <Link href="/login" className="text-blue-600 hover:underline">
